@@ -1,0 +1,18 @@
+{
+  "name": "mytv-ott-server",
+  "version": "1.0.0",
+  "description": "MY TV OTT proxy server",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "express": "^4.19.2",
+    "node-fetch": "^3.3.2",
+    "node-cache": "^5.1.2",
+    "xml2js": "^0.6.2"
+  }
+}

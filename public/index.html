@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>MY TV OTT • Live Channels & VOD Player</title>
+  <meta name="description" content="Premium 10-foot OTT IPTV & VOD Cinema player designed for Smart TVs, TV boxes, and browsers with Malaysia coverage.">
+
+  <!-- Google Fonts: Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome 6 Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="css/app.css">
+
+  <!-- Streaming Engines: Hls.js & Shaka Player with UI Text Displayer (for MPEG-DASH, ClearKey DRM & Subtitles) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/controls.css">
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.ui.js"></script>
+</head>
+<body>
+  <div id="app-root">
+
+    <!-- ======================================================================
+         SIDEBAR NAVIGATION
+         ====================================================================== -->
+    <aside id="app-sidebar" role="navigation" aria-label="Main Navigation">
+      <div class="sidebar-brand focusable" tabindex="0" title="MY TV OTT">
+        <div class="sidebar-brand-icon">
+          <i class="fa-solid fa-play"></i>
+        </div>
+        <div class="sidebar-brand-text">MY OTT TV</div>
+      </div>
+
+      <nav class="sidebar-menu">
+        <button class="nav-item focusable active" data-view="live-tv" tabindex="0">
+          <i class="fa-solid fa-satellite-dish"></i>
+          <span>Live Channels</span>
+        </button>
+        <button class="nav-item focusable" data-view="vod-movies" tabindex="0">
+          <i class="fa-solid fa-film"></i>
+          <span>Movies (VOD)</span>
+        </button>
+        <button class="nav-item focusable" data-view="vod-series" tabindex="0">
+          <i class="fa-solid fa-tv"></i>
+          <span>TV Series</span>
+        </button>
+        <button class="nav-item focusable" data-view="epg-guide" tabindex="0">
+          <i class="fa-solid fa-calendar-days"></i>
+          <span>TV Guide (EPG)</span>
+        </button>
+        <button class="nav-item focusable" data-view="settings" tabindex="0">
+          <i class="fa-solid fa-sliders"></i>
+          <span>Playlists & Settings</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="nav-item focusable" id="sidebar-fullscreen-btn" tabindex="0" onclick="document.getElementById('osd-fullscreen-btn').click()">
+          <i class="fa-solid fa-expand"></i>
+          <span>Fullscreen</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ======================================================================
+         MAIN VIEWPORT
+         ====================================================================== -->
+    <main id="main-viewport">
+
+      <!-- Top Header Bar -->
+      <header class="top-header">
+        <div class="header-left">
+          <div class="header-title-badge">
+            <span class="country-flag" title="Malaysia Coverage">🇲🇾</span>
+            <h1>Malaysia TV &amp; Cinema</h1>
+            <div class="status-pill">
+              <span class="pulse-dot"></span>
+              <span>LIVE</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <div class="search-bar">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="app-search-input" placeholder="Search channels, movies..." autocomplete="off">
+          </div>
+
+          <button class="quick-action-btn focusable" id="virtual-remote-toggle" title="Toggle Virtual Remote" tabindex="0">
+            <i class="fa-solid fa-gamepad"></i>
+          </button>
+
+          <div class="clock-display">
+            <div class="clock-time" id="clock-time">00:00:00</div>
+            <div class="clock-date" id="clock-date">MYT (UTC+8)</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- ====================================================================
+           VIEW 1: LIVE TV (OTT Split Layout)
+           ==================================================================== -->
+      <section class="view-section active" id="view-live-tv">
+        <!-- Categories Column -->
+        <div class="tv-categories-pane" id="tv-categories-list">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- Channels Column -->
+        <div class="tv-channels-pane">
+          <div class="channels-pane-header">
+            <h2>Channels</h2>
+            <div style="display:flex; align-items:center; gap:5px;">
+              <button class="filter-chip active" id="filter-all-btn" style="padding:2px 8px; font-size:10px;">ALL</button>
+              <button class="filter-chip" id="filter-hd-btn" style="padding:2px 8px; font-size:10px;">1080P</button>
+              <button class="filter-chip" id="filter-fav-btn" style="padding:2px 8px; font-size:10px;"><i class="fa-solid fa-heart" style="color:var(--accent-red)"></i></button>
+            </div>
+          </div>
+          <div class="channels-list" id="tv-channels-list">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Video Player Stage -->
+        <div class="tv-player-stage">
+          <div id="video-player-container">
+            <video id="main-video" playsinline></video>
+            <!-- Dedicated On-Screen TV Subtitle Overlay -->
+            <div id="player-subtitle-overlay" class="player-subtitle-overlay"></div>
+
+            <!-- Loading Spinner -->
+            <div class="player-loader" id="player-loader">
+              <div class="spinner-ring"></div>
+              <div class="loader-text">Connecting to Live Stream...</div>
+            </div>
+
+            <!-- Error Banner -->
+            <div class="player-error-banner" id="player-error">
+              <div class="player-error-icon">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+              <h3>Stream Unavailable</h3>
+              <p id="player-error-text">The broadcaster stream might be geo-restricted or temporarily offline.</p>
+              <div class="error-actions">
+                <button class="btn-primary" id="player-retry-btn">
+                  <i class="fa-solid fa-rotate-right"></i> Retry Stream
+                </button>
+                <button class="btn-secondary" id="player-proxy-btn">
+                  <i class="fa-solid fa-shield-halved"></i> Route via Laragon Proxy
+                </button>
+              </div>
+            </div>
+
+            <!-- Quick Channels Drawer Overlay -->
+            <div class="player-quick-channels" id="player-quick-channels">
+              <div class="channels-pane-header">
+                <h2>Quick Switch</h2>
+                <button class="btn-fav" onclick="document.getElementById('player-quick-channels').classList.remove('open')">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+              <div class="channels-list" id="quick-channels-list"></div>
+            </div>
+
+            <!-- OSD Top -->
+            <div class="player-osd-top" id="osd-top">
+              <div class="osd-channel-meta">
+                <div class="osd-logo">
+                  <img id="osd-channel-logo" src="" alt="Logo">
+                </div>
+                <div class="osd-titles">
+                  <h2 id="osd-channel-name">Channel</h2>
+                  <p id="osd-channel-program">Live Broadcast</p>
+                  <p id="osd-channel-next" style="font-size: 11px; color: var(--text-muted); margin-top: 2px; display: none;"></p>
+                </div>
+              </div>
+              <div style="display: flex; gap: 10px;">
+                <button class="osd-btn focusable" onclick="document.getElementById('player-quick-channels').classList.toggle('open')" title="Channel Drawer">
+                  <i class="fa-solid fa-list-ul"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- OSD Bottom -->
+            <div class="player-osd-bottom" id="osd-bottom">
+              <div class="osd-progress-row">
+                <span class="time-label" id="osd-time-current">00:00</span>
+                <div class="progress-track" id="osd-progress">
+                  <div class="progress-fill" id="osd-progress-fill">
+                    <div class="progress-thumb"></div>
+                  </div>
+                </div>
+                <span class="time-label" id="osd-time-total" style="text-align: right;">LIVE</span>
+              </div>
+
+              <div class="osd-controls-row">
+                <div class="controls-left">
+                  <button class="osd-btn play-pause-btn focusable" id="osd-play-pause" title="Play/Pause">
+                    <i class="fa-solid fa-pause"></i>
+                  </button>
+                  <div class="volume-container">
+                    <button class="osd-btn focusable" id="osd-volume-btn" title="Mute/Unmute">
+                      <i class="fa-solid fa-volume-high"></i>
+                    </button>
+                    <input type="range" class="volume-slider" id="osd-volume-slider" min="0" max="1" step="0.05" value="1">
+                  </div>
+                </div>
+
+                <div class="controls-center">
+                  <span class="status-pill">
+                    <span class="pulse-dot"></span>
+                    <span id="osd-status-badge">1080P • LIVE</span>
+                  </span>
+                </div>
+
+                <div class="controls-right">
+                  <button class="osd-btn focusable" id="osd-subtitles-btn" title="Subtitles (CC)">
+                    <i class="fa-solid fa-closed-captioning"></i>
+                  </button>
+                  <button class="osd-btn focusable" id="osd-aspect-btn" title="Cycle Aspect Ratio">
+                    <i class="fa-solid fa-expand"></i>
+                  </button>
+                  <button class="osd-btn focusable" id="osd-pip-btn" title="Picture-in-Picture">
+                    <i class="fa-solid fa-clone"></i>
+                  </button>
+                  <button class="osd-btn focusable" id="osd-fullscreen-btn" title="Fullscreen">
+                    <i class="fa-solid fa-maximize"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Subtitles Popup Menu -->
+            <div class="osd-menu-popup" id="osd-subtitles-menu">
+              <div class="osd-menu-title"><i class="fa-solid fa-closed-captioning"></i> Subtitles &amp; Audio</div>
+              <div id="subtitles-tracks-list" style="display:flex; flex-direction:column; gap:4px;">
+                <!-- Populated dynamically by player.js -->
+              </div>
+              <button class="osd-menu-item" id="btn-load-custom-sub" style="border-top: 1px solid var(--border-subtle); margin-top: 4px; padding-top: 8px;">
+                <span><i class="fa-solid fa-file-arrow-up"></i> Load .SRT / .VTT File</span>
+              </button>
+              <button class="osd-menu-item" id="btn-search-sub" style="padding-top: 6px;">
+                <span><i class="fa-solid fa-magnifying-glass"></i> Search Subtitles Online</span>
+              </button>
+              <input type="file" id="custom-sub-file-input" accept=".vtt,.srt" style="display: none;">
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           VIEW 2: VOD MOVIES
+           ==================================================================== -->
+      <section class="view-section" id="view-vod-movies">
+        <div class="vod-container">
+          <!-- Featured Movie Hero Banner -->
+          <div class="vod-hero-banner" style="background-image: url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1400&auto=format&fit=crop&q=80');">
+            <div class="vod-hero-gradient"></div>
+            <div class="vod-hero-content">
+              <span class="hero-tag"><i class="fa-solid fa-fire"></i> Featured Premiere</span>
+              <h2>Tears of Steel</h2>
+              <div class="hero-meta">
+                <span class="hero-rating"><i class="fa-solid fa-star"></i> 8.6</span>
+                <span>2023</span>
+                <span>1h 32m</span>
+                <span class="badge-res">4K UHD</span>
+                <span>Sci-Fi / Action</span>
+              </div>
+              <p>In a dystopian future Amsterdam, a squad of resistance fighters and tech savants make one final attempt to reverse the cataclysm that overtook civilization.</p>
+              <div class="hero-actions">
+                <button class="btn-primary focusable" onclick="document.querySelector('.vod-card').click()" tabindex="0">
+                  <i class="fa-solid fa-play"></i> Watch Now
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Genre Filter Chips Bar -->
+          <div class="filter-chips-bar" id="vod-genre-chips">
+            <button class="filter-chip active" data-genre="all"><i class="fa-solid fa-layer-group"></i> All Genres</button>
+            <button class="filter-chip" data-genre="Sci-Fi">🚀 Sci-Fi</button>
+            <button class="filter-chip" data-genre="Action">💥 Action</button>
+            <button class="filter-chip" data-genre="Fantasy">🧙 Fantasy &amp; Adventure</button>
+            <button class="filter-chip" data-genre="Animation">🐰 Animation &amp; Comedy</button>
+            <button class="filter-chip" data-genre="Cyberpunk">🤖 Cyberpunk</button>
+            <button class="filter-chip" data-genre="Horror">🧟 Horror</button>
+          </div>
+
+          <!-- Movies Grid -->
+          <div class="vod-row">
+            <div class="vod-row-header">
+              <h3><i class="fa-solid fa-clapperboard"></i> Blockbuster Movies</h3>
+            </div>
+            <div class="vod-grid" id="vod-movies-grid"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           VIEW 3: VOD TV SERIES
+           ==================================================================== -->
+      <section class="view-section" id="view-vod-series">
+        <div class="vod-container">
+          <div class="vod-row">
+            <div class="vod-row-header">
+              <h3><i class="fa-solid fa-tv"></i> Binge-Worthy TV Series</h3>
+            </div>
+            <div class="vod-grid" id="vod-series-grid"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           VIEW 4: EPG SCHEDULE GUIDE
+           ==================================================================== -->
+      <section class="view-section" id="view-epg-guide">
+        <div class="epg-container">
+          <div class="epg-header-bar">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <i class="fa-solid fa-calendar-check" style="font-size:22px; color:var(--primary);"></i>
+              <div>
+                <h2 style="font-size:16px; font-weight:700; color:#fff;">Live Program Timeline Guide</h2>
+                <p style="font-size:12px; color:var(--text-secondary);">Real-time broadcast schedule for Malaysian and international channels</p>
+              </div>
+            </div>
+            <span class="status-pill">
+              <span class="pulse-dot"></span>
+              <span>SYNCHRONIZED</span>
+            </span>
+          </div>
+
+          <div class="epg-timeline-view" id="epg-timeline-container">
+            <!-- Populated by epg.js -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           VIEW 5: SETTINGS & PLAYLIST / XTREAM IMPORTER
+           ==================================================================== -->
+      <section class="view-section" id="view-settings">
+        <div class="settings-container">
+          <!-- 1-Click Ready Playlists Card -->
+          <div class="settings-card" style="border: 1px solid var(--primary); background: linear-gradient(180deg, rgba(0,210,255,0.08) 0%, rgba(18,22,33,0.9) 100%);">
+            <div class="settings-card-header">
+              <i class="fa-solid fa-wand-magic-sparkles" style="color:var(--primary);"></i>
+              <div>
+                <h3 style="color:#fff;">1-Click Free Channel Packs (No M3U Needed!)</h3>
+                <p style="font-size:12px; color:var(--text-secondary); margin-top:2px;">Don't have a playlist? Just click any button below to instantly load hundreds of working channels!</p>
+              </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; margin-top: 6px;">
+              
+              <!-- SQ2 Box tv2u.cc Lineup -->
+              <div style="background: linear-gradient(135deg, rgba(225,29,72,0.15), rgba(245,158,11,0.08)); border: 1px solid var(--primary); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
+                <div>
+                  <div style="font-size: 24px; margin-bottom: 6px;">📡</div>
+                  <h4 style="font-size: 15px; font-weight: 700; color: #fff;">SQ2 Box / tv2u.cc Lineup</h4>
+                  <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">196 channels from your OTT Navigator box: Astro Ria, Prima, Ceria, Boo, HBO, TV3, RTM, & Sports.</p>
+                </div>
+                <button class="btn-primary preset-load-btn" data-preset="playlist_tv2u.m3u" style="font-size: 12px; padding: 8px 14px; background: linear-gradient(135deg, var(--primary), #e11d48);">
+                  <i class="fa-solid fa-satellite-dish"></i> 1-Click Load SQ2 Lineup
+                </button>
+              </div>
+
+              <!-- Malaysia TV Pack -->
+              <div style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
+                <div>
+                  <div style="font-size: 24px; margin-bottom: 6px;">🇲🇾</div>
+                  <h4 style="font-size: 15px; font-weight: 700; color: #fff;">Malaysia Free-To-Air</h4>
+                  <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">RTM TV1, TV2, Okey, Sukan RTM, Berita RTM, SelangorTV, TVS Sarawak & more.</p>
+                </div>
+                <button class="btn-primary preset-load-btn" data-preset="https://iptv-org.github.io/iptv/countries/my.m3u" style="font-size: 12px; padding: 8px 14px;">
+                  <i class="fa-solid fa-bolt"></i> 1-Click Load Malaysia
+                </button>
+              </div>
+
+              <!-- 24/7 Movies Pack -->
+              <div style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
+                <div>
+                  <div style="font-size: 24px; margin-bottom: 6px;">🍿</div>
+                  <h4 style="font-size: 15px; font-weight: 700; color: #fff;">24/7 Cinema & Movies</h4>
+                  <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Over 80 free global movie channels streaming action, thriller, horror, drama.</p>
+                </div>
+                <button class="btn-primary preset-load-btn" data-preset="https://iptv-org.github.io/iptv/categories/movies.m3u" style="font-size: 12px; padding: 8px 14px;">
+                  <i class="fa-solid fa-bolt"></i> 1-Click Load Movies
+                </button>
+              </div>
+
+              <!-- World Sports Pack -->
+              <div style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
+                <div>
+                  <div style="font-size: 24px; margin-bottom: 6px;">⚽</div>
+                  <h4 style="font-size: 15px; font-weight: 700; color: #fff;">World Sports Channels</h4>
+                  <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Live sports, motorsport, extreme sports, boxing, football highlights.</p>
+                </div>
+                <button class="btn-primary preset-load-btn" data-preset="https://iptv-org.github.io/iptv/categories/sports.m3u" style="font-size: 12px; padding: 8px 14px;">
+                  <i class="fa-solid fa-bolt"></i> 1-Click Load Sports
+                </button>
+              </div>
+
+              <!-- Global News Pack -->
+              <div style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
+                <div>
+                  <div style="font-size: 24px; margin-bottom: 6px;">🌍</div>
+                  <h4 style="font-size: 15px; font-weight: 700; color: #fff;">International News HD</h4>
+                  <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">CNA, Al Jazeera, BBC, DW, EuroNews, Sky News, France24 live broadcasts.</p>
+                </div>
+                <button class="btn-primary preset-load-btn" data-preset="https://iptv-org.github.io/iptv/categories/news.m3u" style="font-size: 12px; padding: 8px 14px;">
+                  <i class="fa-solid fa-bolt"></i> 1-Click Load News
+                </button>
+              </div>
+
+              <!-- Animation & Kids Pack -->
+              <div style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
+                <div>
+                  <div style="font-size: 24px; margin-bottom: 6px;">🧒</div>
+                  <h4 style="font-size: 15px; font-weight: 700; color: #fff;">Animation & Cartoons</h4>
+                  <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Classic animation, 24/7 cartoons, and educational learning channels.</p>
+                </div>
+                <button class="btn-primary preset-load-btn" data-preset="https://iptv-org.github.io/iptv/categories/kids.m3u" style="font-size: 12px; padding: 8px 14px;">
+                  <i class="fa-solid fa-bolt"></i> 1-Click Load Kids
+                </button>
+              </div>
+
+              <!-- Reset to Defaults -->
+              <div style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
+                <div>
+                  <div style="font-size: 24px; margin-bottom: 6px;">🔄</div>
+                  <h4 style="font-size: 15px; font-weight: 700; color: #fff;">Reset App Lineup</h4>
+                  <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Clear all imported channels and restore the default curated Malaysia lineup.</p>
+                </div>
+                <button class="btn-secondary" id="btn-reset-channels" style="font-size: 12px; padding: 8px 14px;">
+                  <i class="fa-solid fa-trash-can"></i> Restore Default
+                </button>
+              </div>
+
+            </div>
+            <div id="preset-load-status" style="margin-top: 10px; font-size: 13px;"></div>
+          </div>
+
+          <!-- M3U Playlist Card -->
+          <div class="settings-card">
+            <div class="settings-card-header">
+              <i class="fa-solid fa-file-arrow-up"></i>
+              <h3>Import Custom M3U / M3U8 Playlist (Optional)</h3>
+            </div>
+            <p style="font-size:13px; color:var(--text-secondary);">
+              Add your own M3U playlist URL to load custom channels into the player.
+            </p>
+            <form id="form-m3u-import" style="display:flex; flex-direction:column; gap:14px;">
+              <div class="form-group">
+                <label>Playlist URL (.m3u or .m3u8)</label>
+                <input type="url" class="form-control" id="m3u-url-input" placeholder="https://example.com/playlist.m3u" required>
+              </div>
+              <button type="submit" class="btn-primary" style="width:fit-content; padding:10px 24px;">
+                <i class="fa-solid fa-download"></i> Load Playlist
+              </button>
+              <div id="import-status"></div>
+            </form>
+          </div>
+
+          <!-- Xtream Codes API Card -->
+          <div class="settings-card">
+            <div class="settings-card-header">
+              <i class="fa-solid fa-server"></i>
+              <h3>Xtream Codes IPTV Provider Login</h3>
+            </div>
+            <p style="font-size:13px; color:var(--text-secondary);">
+              Connect your Xtream Codes IPTV provider subscription directly to synchronize live streams.
+            </p>
+            <form id="form-xtream-import" style="display:flex; flex-direction:column; gap:14px;">
+              <div class="form-group">
+                <label>Server URL with Port</label>
+                <input type="text" class="form-control" id="xtream-server" placeholder="http://iptv-server.com:8080" required>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Username</label>
+                  <input type="text" class="form-control" id="xtream-user" placeholder="Username" required>
+                </div>
+                <div class="form-group">
+                  <label>Password</label>
+                  <input type="password" class="form-control" id="xtream-pass" placeholder="Password" required>
+                </div>
+              </div>
+              <button type="submit" class="btn-primary" style="width:fit-content; padding:10px 24px;">
+                <i class="fa-solid fa-link"></i> Connect Xtream Account
+              </button>
+              <div id="xtream-status"></div>
+            </form>
+          </div>
+
+          <!-- Laragon Server Proxy Info -->
+          <div class="settings-card">
+            <div class="settings-card-header">
+              <i class="fa-solid fa-shield-halved"></i>
+              <h3>Local Laragon CORS Proxy</h3>
+            </div>
+            <p style="font-size:13px; color:var(--text-secondary); line-height:1.6;">
+              Certain Malaysian Free-to-Air broadcasters enforce strict CORS or Referer checks (such as RTM GlueAPI). 
+              The application comes with a built-in <code style="color:var(--primary);">proxy.php</code> running directly in Laragon to transparently tunnel streams and eliminate CORS blocks.
+            </p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ======================================================================
+         VIRTUAL D-PAD REMOTE OVERLAY (For testing or remote simulation)
+         ====================================================================== -->
+    <div class="virtual-remote-popup" id="virtual-remote-popup">
+      <div style="font-size:12px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.8px;">
+        TV Remote Control
+      </div>
+      <div class="remote-dpad">
+        <button class="dpad-btn dpad-up" id="remote-btn-up" title="Up"><i class="fa-solid fa-chevron-up"></i></button>
+        <button class="dpad-btn dpad-left" id="remote-btn-left" title="Left"><i class="fa-solid fa-chevron-left"></i></button>
+        <button class="dpad-ok" id="remote-btn-ok" title="OK">OK</button>
+        <button class="dpad-btn dpad-right" id="remote-btn-right" title="Right"><i class="fa-solid fa-chevron-right"></i></button>
+        <button class="dpad-btn dpad-down" id="remote-btn-down" title="Down"><i class="fa-solid fa-chevron-down"></i></button>
+      </div>
+      <div class="remote-bottom-row">
+        <button class="remote-small-btn" id="remote-btn-back"><i class="fa-solid fa-arrow-left"></i> Back</button>
+        <button class="remote-small-btn" id="remote-btn-guide"><i class="fa-solid fa-table-list"></i> EPG</button>
+        <button class="remote-small-btn" id="remote-btn-fullscreen"><i class="fa-solid fa-expand"></i> Full</button>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         MODAL: MOVIE DETAIL
+         ====================================================================== -->
+    <div class="modal-backdrop" id="movie-detail-modal">
+      <div class="modal-box">
+        <button class="modal-close-btn" title="Close"><i class="fa-solid fa-xmark"></i></button>
+        <div style="display:flex; gap:24px; padding:32px;">
+          <div style="width:200px; flex-shrink:0;">
+            <img id="modal-movie-poster" src="" alt="Poster" style="width:100%; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.8);">
+          </div>
+          <div style="display:flex; flex-direction:column; gap:12px; flex:1;">
+            <h2 id="modal-movie-title" style="font-size:26px; font-weight:800; color:#fff;"></h2>
+            <div style="display:flex; align-items:center; gap:12px; font-size:13px; color:var(--text-secondary);">
+              <span id="modal-movie-rating" style="color:var(--accent-gold); font-weight:700;"></span>
+              <span id="modal-movie-meta"></span>
+            </div>
+            <p id="modal-movie-desc" style="font-size:14px; color:#cbd5e1; line-height:1.6; margin-top:8px;"></p>
+            <div id="modal-movie-cast" style="font-size:12px; color:var(--text-muted);"></div>
+            <div style="margin-top:16px;">
+              <button class="btn-primary" id="modal-movie-play-btn" style="padding:12px 28px; width:fit-content;">
+                <i class="fa-solid fa-play"></i> Watch Movie Now
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         MODAL: TV SERIES EPISODES
+         ====================================================================== -->
+    <div class="modal-backdrop" id="series-detail-modal">
+      <div class="modal-box">
+        <button class="modal-close-btn" title="Close"><i class="fa-solid fa-xmark"></i></button>
+        <div style="display:flex; gap:24px; padding:32px 32px 16px 32px; border-bottom:1px solid var(--border-subtle);">
+          <div style="width:140px; flex-shrink:0;">
+            <img id="modal-series-poster" src="" alt="Poster" style="width:100%; border-radius:10px;">
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px; flex:1;">
+            <h2 id="modal-series-title" style="font-size:24px; font-weight:800; color:#fff;"></h2>
+            <div id="modal-series-meta" style="font-size:13px; color:var(--text-secondary);"></div>
+            <p id="modal-series-desc" style="font-size:13px; color:#cbd5e1; line-height:1.5;"></p>
+          </div>
+        </div>
+        <div style="padding:20px 32px;">
+          <h3 style="font-size:15px; font-weight:700; color:#fff; margin-bottom:14px; text-transform:uppercase; letter-spacing:0.5px;">Episodes</h3>
+          <div id="modal-series-episodes-list" style="display:flex; flex-direction:column; gap:10px;"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/channels.js"></script>
+  <script src="js/vod.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/epg.js"></script>
+  <script src="js/xtream.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
