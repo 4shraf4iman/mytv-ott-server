@@ -229,7 +229,7 @@ const DEFAULT_CHANNELS = [
     {
         "id": "ch-103",
         "number": "103",
-        "name": "103 TV3",
+        "name": "103 TV3 HD",
         "group": "MALAY ENTERTAINMENT & GENERAL",
         "logo": "https://divign0fdw3sv.cloudfront.net/Images/ChannelLogo/contenthub/106_144.png",
         "streamUrl": "https://linearjitp-playback.astro.com.my/dash-wv/linear/809/default_primary.mpd",
@@ -1887,6 +1887,45 @@ const DEFAULT_CHANNELS = [
                 "end": "03:30 AM",
                 "startTs": 1790876700,
                 "stopTs": 1790883000
+            }
+        ],
+        "favorite": false
+    },
+    {
+        "id": "ch-410",
+        "number": "410",
+        "name": "410 HBO HD",
+        "group": "MOVIES & ENGLISH ENTERTAINMENT",
+        "logo": "https://raw.githubusercontent.com/PuteraPerlis74/MOVIES-LOGO/main/HBO%20HD.png",
+        "streamUrl": "https://load.ptv2026.com/rwt.m3u8?username=vip_3klp0es8&password=wg3piwEs&channel=hbo",
+        "licenseKey": null,
+        "userAgent": "Mozilla/5.0",
+        "referer": null,
+        "resolution": "HD",
+        "currentProgram": "HBO Feature Presentation",
+        "nextProgram": "HBO World Premiere",
+        "desc": "Home Box Office (HBO) delivers award-winning blockbuster Hollywood movies, HBO original series, and world-class entertainment in high definition.",
+        "progress": 55,
+        "programStart": "10:00 AM",
+        "programEnd": "12:00 PM",
+        "schedule": [
+            {
+                "title": "HBO Feature Presentation",
+                "desc": "Blockbuster Hollywood feature film and exclusive cinematic entertainment.",
+                "category": "Movie",
+                "start": "10:00 AM",
+                "end": "12:00 PM",
+                "startTs": 1790820000,
+                "stopTs": 1790827200
+            },
+            {
+                "title": "HBO World Premiere",
+                "desc": "Critically acclaimed Hollywood premiere movies and top rated cinematic releases.",
+                "category": "Movie",
+                "start": "12:00 PM",
+                "end": "02:15 PM",
+                "startTs": 1790827200,
+                "stopTs": 1790835300
             }
         ],
         "favorite": false
@@ -8250,66 +8289,80 @@ function getChannelCategories(channels) {
 }
 
 function generateScheduleForChannel(channel) {
+  const nowSec = Math.floor(Date.now() / 1000);
+
   if (channel.schedule && Array.isArray(channel.schedule) && channel.schedule.length > 0) {
     const list = [];
-    if (channel.currentProgram) {
-      list.push({
-        title: channel.currentProgram,
-        startTime: channel.programStart || "NOW",
-        endTime: channel.programEnd || "",
-        desc: channel.desc || "Siaran utama hari ini.",
-        isCurrent: true
-      });
-    }
     channel.schedule.forEach(item => {
+      const isCurrent = (item.startTs && item.stopTs)
+        ? (nowSec >= item.startTs && nowSec < item.stopTs)
+        : false;
+
+      const formatTime = (ts) => {
+        if (!ts) return "";
+        const d = new Date(ts * 1000);
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      };
+
       list.push({
         title: item.title,
-        startTime: item.start,
-        endTime: item.end,
-        desc: item.desc,
-        isCurrent: false
+        startTime: item.start || formatTime(item.startTs) || "NOW",
+        endTime: item.end || formatTime(item.stopTs) || "",
+        desc: item.desc || "Siaran berjadual televisyen.",
+        isCurrent: isCurrent,
+        startTs: item.startTs || 0,
+        stopTs: item.stopTs || 0
       });
     });
+
+    list.sort((a, b) => (a.startTs || 0) - (b.startTs || 0));
+
+    // Show current program and upcoming shows
+    const upcoming = list.filter(item => !item.stopTs || item.stopTs >= nowSec - 600);
+    if (upcoming.length > 0) {
+      if (!upcoming.some(p => p.isCurrent)) {
+        upcoming[0].isCurrent = true;
+      }
+      return upcoming;
+    }
     return list;
   }
 
+  // Realistic dynamic generator aligned with current hour
   const now = new Date();
-  const baseMinutes = Math.floor(now.getMinutes() / 30) * 30;
-  const startTime = new Date(now);
-  startTime.setMinutes(baseMinutes, 0, 0);
+  const currentMinutes = now.getMinutes();
+  const startMinute = currentMinutes < 30 ? 0 : 30;
+  let slotTime = new Date(now);
+  slotTime.setMinutes(startMinute, 0, 0);
 
   const programs = [];
-  const titles = [
-    { title: channel.currentProgram || "Siaran Langsung", duration: 30, desc: "Siaran langsung program utama hari ini." },
-    { title: channel.nextProgram || "Buletin Terkini", duration: 45, desc: "Liputan ringkas berita dan perkembangan semasa." },
-    { title: "Dokumentari Khas", duration: 60, desc: "Penjelajahan sains, kebudayaan dan keindahan alam sekitar." },
-    { title: "Drama Bersiri Pilihan", duration: 60, desc: "Episod terbaharu siri drama pilihan ramai." },
-    { title: "Bicara Eksklusif", duration: 45, desc: "Temubual interaktif bersama tetamu jemputan terkemuka." },
-    { title: "Sorotan Malam", duration: 30, desc: "Ulasan penutup hari dan perkongsian gaya hidup." }
+  const templates = [
+    { title: channel.name.includes("News") ? "Buletin Terkini" : (channel.currentProgram || "Siaran Langsung"), duration: 30, desc: "Siaran langsung program utama hari ini." },
+    { title: channel.nextProgram || "Sorotan Khas", duration: 30, desc: "Liputan menarik perkembangan terkini." },
+    { title: "Dokumentari Menarik", duration: 60, desc: "Penerokaan sains, sejarah dan kebudayaan." },
+    { title: "Drama Terpilih", duration: 60, desc: "Episod drama bersiri popular tempatan dan antarabangsa." },
+    { title: "Bicara Santai", duration: 30, desc: "Wawancara eksklusif bersama tetamu jemputan." },
+    { title: "Ulasan Malam", duration: 30, desc: "Rumusan acara dan hiburan penutup hari." }
   ];
 
-  let currentCursor = new Date(startTime.getTime() - 15 * 60 * 1000);
-
   for (let i = 0; i < 6; i++) {
-    const item = titles[i % titles.length];
-    const progEnd = new Date(currentCursor.getTime() + item.duration * 60 * 1000);
+    const item = templates[i % templates.length];
+    const progStart = new Date(slotTime);
+    const progEnd = new Date(slotTime.getTime() + item.duration * 60 * 1000);
 
-    const formatTime = (d) => {
-      const hh = String(d.getHours()).padStart(2, "0");
-      const mm = String(d.getMinutes()).padStart(2, "0");
-      return `${hh}:${mm}`;
-    };
+    const formatTime = (d) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     programs.push({
       title: item.title,
-      startTime: formatTime(currentCursor),
+      startTime: formatTime(progStart),
       endTime: formatTime(progEnd),
       desc: item.desc,
-      progress: i === 1 ? 40 : (i === 0 ? 90 : 0),
-      isCurrent: i === 0
+      isCurrent: i === 0,
+      startTs: Math.floor(progStart.getTime() / 1000),
+      stopTs: Math.floor(progEnd.getTime() / 1000)
     });
 
-    currentCursor = progEnd;
+    slotTime = progEnd;
   }
 
   return programs;

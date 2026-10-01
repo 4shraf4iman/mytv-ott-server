@@ -108,8 +108,6 @@ app.get('/proxy', async (req, res) => {
   if (/load\.ptv2026\.com|perfecttv\.net|tv2u\.cc/.test(targetUrl)) {
     if (/channel=boo/i.test(targetUrl))
       targetUrl = 'https://linearjitp-playback.astro.com.my/dash-wv/linear/2407/default_primary.mpd';
-    else if (/channel=hbo/i.test(targetUrl))
-      targetUrl = 'https://linearjitp-playback.astro.com.my/dash-wv/linear/5054/default_ott.mpd';
     else if (/channel=ceria/i.test(targetUrl))
       targetUrl = 'https://linearjitp-playback.astro.com.my/dash-wv/linear/509/default_ott.mpd';
   }

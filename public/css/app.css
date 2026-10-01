@@ -1825,3 +1825,394 @@ video::cue {
   filter: drop-shadow(0 4px 8px rgba(0,0,0,0.9)) !important;
 }
 
+/* ==========================================================================
+   MOBILE & TABLET RESPONSIVE ENGINE (Touch, Portrait & Compact Screens)
+   Seamlessly transforms 10-foot TV UI into a sleek modern Mobile OTT App
+   ========================================================================== */
+
+@media (max-width: 900px) {
+  /* Mobile Root Shell */
+  #app-root {
+    flex-direction: column-reverse;
+    height: 100vh;
+    height: 100dvh;
+    width: 100vw;
+    overflow: hidden;
+  }
+
+  /* Bottom Navigation Bar for Mobile */
+  #app-sidebar {
+    width: 100% !important;
+    height: 58px !important;
+    min-height: 58px !important;
+    flex-direction: row !important;
+    border-right: none !important;
+    border-top: 1px solid var(--border-subtle) !important;
+    padding: 0 !important;
+    background: rgba(9, 12, 18, 0.98) !important;
+    box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.6) !important;
+    z-index: 100 !important;
+    flex-shrink: 0 !important;
+  }
+
+  #app-sidebar .sidebar-brand,
+  #app-sidebar .sidebar-footer {
+    display: none !important;
+  }
+
+  #app-sidebar .sidebar-menu {
+    flex-direction: row !important;
+    width: 100% !important;
+    height: 100% !important;
+    justify-content: space-around !important;
+    align-items: center !important;
+    gap: 2px !important;
+    padding: 0 4px !important;
+  }
+
+  #app-sidebar .nav-item {
+    flex: 1 !important;
+    height: 100% !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 4px 2px !important;
+    gap: 3px !important;
+    border-left: none !important;
+    border-radius: var(--radius-sm) !important;
+    background: transparent !important;
+    min-width: 0 !important;
+  }
+
+  #app-sidebar .nav-item i {
+    font-size: 16px !important;
+    width: auto !important;
+    height: auto !important;
+    line-height: 1 !important;
+  }
+
+  #app-sidebar .nav-item span {
+    display: block !important;
+    font-size: 10px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0 !important;
+    opacity: 0.85 !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    overflow: hidden !important;
+    max-width: 100% !important;
+  }
+
+  #app-sidebar .nav-item.active {
+    background: rgba(0, 210, 255, 0.12) !important;
+    color: var(--primary) !important;
+  }
+
+  #app-sidebar .nav-item.active span {
+    opacity: 1 !important;
+    font-weight: 700 !important;
+  }
+
+  /* Viewport Container */
+  #main-viewport {
+    flex: 1 !important;
+    width: 100% !important;
+    height: calc(100% - 58px) !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* Compact Mobile Header */
+  .top-header {
+    height: 46px !important;
+    min-height: 46px !important;
+    padding: 0 10px !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .top-header .header-left {
+    gap: 8px !important;
+  }
+
+  .top-header .header-left h1 {
+    font-size: 13px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 130px !important;
+  }
+
+  .top-header .country-flag {
+    font-size: 18px !important;
+  }
+
+  .top-header .status-pill,
+  .top-header .clock-display,
+  .top-header .quick-action-btn {
+    display: none !important;
+  }
+
+  .top-header .search-bar {
+    width: auto !important;
+    flex: 1 !important;
+    max-width: 180px !important;
+    padding: 5px 10px !important;
+    gap: 6px !important;
+  }
+
+  .top-header .search-bar input {
+    font-size: 12px !important;
+  }
+
+  /* Mobile Live TV Split: Portrait Mode */
+  #view-live-tv {
+    flex-direction: column !important;
+    height: 100% !important;
+    width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  /* Player Stage moves to top with sticky 16:9 frame */
+  #view-live-tv .tv-player-stage {
+    order: 1 !important;
+    width: 100% !important;
+    height: 220px !important;
+    max-height: 38vh !important;
+    flex: none !important;
+    position: relative !important;
+    background: #000 !important;
+  }
+
+  /* Categories Bar becomes horizontal scrolling pill bar */
+  #view-live-tv .tv-categories-pane {
+    order: 2 !important;
+    width: 100% !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    white-space: nowrap !important;
+    padding: 6px 8px !important;
+    gap: 6px !important;
+    border-right: none !important;
+    border-bottom: 1px solid var(--border-subtle) !important;
+    flex-shrink: 0 !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+  }
+
+  #view-live-tv .tv-categories-pane::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .category-pill {
+    padding: 5px 12px !important;
+    font-size: 12px !important;
+    flex-shrink: 0 !important;
+    height: 32px !important;
+    gap: 6px !important;
+    border-radius: var(--radius-full) !important;
+  }
+
+  .category-pill .cat-left {
+    gap: 6px !important;
+  }
+
+  .category-pill .cat-left i {
+    font-size: 12px !important;
+    width: auto !important;
+  }
+
+  .category-pill .cat-count {
+    font-size: 9px !important;
+    padding: 1px 5px !important;
+  }
+
+  /* Channels Pane takes remaining vertical area with touch scroll */
+  #view-live-tv .tv-channels-pane {
+    order: 3 !important;
+    width: 100% !important;
+    flex: 1 !important;
+    border-right: none !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .channels-pane-header {
+    padding: 8px 12px !important;
+  }
+
+  .channels-pane-header h2 {
+    font-size: 12px !important;
+  }
+
+  .channels-list {
+    padding: 6px 8px !important;
+    gap: 6px !important;
+  }
+
+  .channel-item {
+    padding: 8px 10px !important;
+    gap: 10px !important;
+    border-radius: var(--radius-sm) !important;
+  }
+
+  .channel-num {
+    font-size: 11px !important;
+    width: 22px !important;
+  }
+
+  .channel-logo-wrap {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  .channel-title {
+    font-size: 13px !important;
+  }
+
+  .channel-prog-now {
+    font-size: 11px !important;
+  }
+
+  .channel-prog-next {
+    display: none !important;
+  }
+
+  /* Touch Friendly OSD Buttons */
+  .player-osd-top {
+    padding: 10px 12px !important;
+  }
+
+  .osd-logo {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .osd-titles h2 {
+    font-size: 14px !important;
+  }
+
+  .osd-titles p {
+    font-size: 11px !important;
+  }
+
+  .player-osd-bottom {
+    padding: 10px 12px !important;
+  }
+
+  .osd-controls-row {
+    gap: 8px !important;
+  }
+
+  .osd-btn {
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 14px !important;
+  }
+
+  #osd-volume-slider {
+    display: none !important;
+  }
+
+  /* VOD Grid for Mobile */
+  .vod-grid {
+    grid-template-columns: repeat(auto-fill, minmax(115px, 1fr)) !important;
+    gap: 10px !important;
+    padding: 10px !important;
+  }
+
+  .vod-card {
+    border-radius: var(--radius-sm) !important;
+  }
+
+  .vod-poster-wrap {
+    height: 165px !important;
+  }
+
+  .vod-title {
+    font-size: 12px !important;
+  }
+
+  /* EPG Timeline for Mobile */
+  .epg-timeline-wrap {
+    padding: 8px !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .epg-channels-col {
+    width: 110px !important;
+  }
+
+  /* Settings Grid for Mobile */
+  .settings-container {
+    padding: 12px !important;
+  }
+
+  .settings-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+}
+
+/* Mobile Landscape Optimization (Phone rotated horizontally) */
+@media (max-width: 900px) and (orientation: landscape) {
+  #app-root {
+    flex-direction: row;
+  }
+
+  #app-sidebar {
+    width: 54px !important;
+    height: 100% !important;
+    flex-direction: column !important;
+    border-top: none !important;
+    border-right: 1px solid var(--border-subtle) !important;
+  }
+
+  #app-sidebar .sidebar-menu {
+    flex-direction: column !important;
+    gap: 6px !important;
+  }
+
+  #app-sidebar .nav-item span {
+    display: none !important;
+  }
+
+  #main-viewport {
+    height: 100% !important;
+    width: calc(100% - 54px) !important;
+  }
+
+  #view-live-tv {
+    flex-direction: row !important;
+  }
+
+  #view-live-tv .tv-player-stage {
+    order: 3 !important;
+    flex: 1 !important;
+    height: 100% !important;
+    max-height: none !important;
+  }
+
+  #view-live-tv .tv-categories-pane {
+    order: 1 !important;
+    width: 140px !important;
+    height: 100% !important;
+    flex-direction: column !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    border-bottom: none !important;
+    border-right: 1px solid var(--border-subtle) !important;
+  }
+
+  #view-live-tv .tv-channels-pane {
+    order: 2 !important;
+    width: 220px !important;
+    height: 100% !important;
+    border-right: 1px solid var(--border-subtle) !important;
+  }
+}
+

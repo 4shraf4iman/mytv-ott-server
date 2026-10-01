@@ -1,4 +1,4 @@
-﻿/**
+/**
  * VIDEO PLAYER CONTROLLER FOR OTT TV
  * Powered by Hls.js with native fallback, auto-reconnect, and TV OSD
  */
@@ -293,7 +293,7 @@ class TVPlayer {
     }
 
     const statusBadge = document.getElementById("osd-status-badge");
-    if (statusBadge) statusBadge.textContent = `${channel.resolution || "1080P"} â€¢ LIVE`;
+    if (statusBadge) statusBadge.textContent = `${channel.resolution || "1080P"} • LIVE`;
 
     const osdLogo = document.getElementById("osd-channel-logo");
     if (osdLogo) osdLogo.src = channel.logo;
@@ -303,7 +303,7 @@ class TVPlayer {
 
     // For HLS streams, route initial manifest through proxy.php. For DASH, Shaka's request filter routes manifests & segments.
     if (!isDash && (forceProxy || channel.forceProxy || this.useProxy) && window.location.protocol.startsWith('http')) {
-      targetUrl = `/proxy?url=${encodeURIComponent(channel.streamUrl)}`;
+      targetUrl = `proxy.php?url=${encodeURIComponent(channel.streamUrl)}`;
       if (channel.referer) {
         targetUrl += `&referer=${encodeURIComponent(channel.referer)}`;
       }
@@ -322,9 +322,9 @@ class TVPlayer {
     this.showLoader(true);
 
     document.getElementById("osd-channel-name").textContent = item.title;
-    document.getElementById("osd-channel-program").textContent = `${item.year || "HD"} â€¢ ${item.genre || "Cinema"}`;
+    document.getElementById("osd-channel-program").textContent = `${item.year || "HD"} • ${item.genre || "Cinema"}`;
     const statusBadge = document.getElementById("osd-status-badge");
-    if (statusBadge) statusBadge.textContent = `${item.quality || "HD"} â€¢ VOD`;
+    if (statusBadge) statusBadge.textContent = `${item.quality || "HD"} • VOD`;
 
     const osdLogo = document.getElementById("osd-channel-logo");
     if (osdLogo) osdLogo.src = item.poster;
@@ -372,8 +372,8 @@ class TVPlayer {
       const curChan = channel || this.currentChannel;
       this.shakaPlayer.getNetworkingEngine().registerRequestFilter((type, request) => {
         const uri = request.uris[0];
-        if (uri && !uri.includes("/proxy") && (uri.startsWith("http://") || uri.startsWith("https://"))) {
-          let proxied = `/proxy?url=${encodeURIComponent(uri)}`;
+        if (uri && !uri.includes("proxy.php") && (uri.startsWith("http://") || uri.startsWith("https://"))) {
+          let proxied = `proxy.php?url=${encodeURIComponent(uri)}`;
           if (curChan && curChan.referer) {
             proxied += `&referer=${encodeURIComponent(curChan.referer)}`;
           }
@@ -387,6 +387,11 @@ class TVPlayer {
       // ClearKey DRM configuration
       const clearKeys = this.parseClearKeys(curChan ? curChan.licenseKey : null);
       const playerConfig = {
+        abr: {
+          enabled: true,
+          defaultBandwidthEstimate: 10000000, // 10 Mbps estimate forces instant HD track selection
+          switchInterval: 1
+        },
         streaming: {
           alwaysStreamText: true,
           bufferingGoal: 6,
@@ -442,6 +447,22 @@ class TVPlayer {
 
       await this.shakaPlayer.load(url);
       console.log("Shaka loaded DASH stream successfully:", url);
+
+      // Force highest available resolution track (HD guarantee)
+      try {
+        const variantTracks = this.shakaPlayer.getVariantTracks();
+        if (variantTracks && variantTracks.length > 0) {
+          const highestTrack = variantTracks.reduce((prev, curr) =>
+            ((curr.height || 0) > (prev.height || 0) || (curr.bandwidth > prev.bandwidth)) ? curr : prev, variantTracks[0]);
+          if (highestTrack && highestTrack.id !== undefined) {
+            console.log("Auto-selected highest HD track:", highestTrack.height + "p", highestTrack.bandwidth, "bps");
+            this.shakaPlayer.selectVariantTrack(highestTrack, /* clearBuffer= */ false);
+          }
+        }
+      } catch (trackErr) {
+        console.warn("Could not auto-select highest track:", trackErr);
+      }
+
       this.showLoader(false);
       this.hideError();
 
@@ -487,7 +508,7 @@ class TVPlayer {
   }
 
   playHls(url, fallbackUrl = null, channel = null) {
-    const isHls = url.includes(".m3u8") || url.includes("manifest") || url.includes("/proxy");
+    const isHls = url.includes(".m3u8") || url.includes("manifest") || url.includes("proxy.php");
 
     if (isHls && window.Hls && Hls.isSupported()) {
       this.hls = new Hls({
@@ -728,10 +749,10 @@ class TVPlayer {
             'ms': 'Malay (Bahasa Melayu)',
             'eng': 'English',
             'en': 'English',
-            'chi': 'Chinese (ä¸­æ–‡)',
-            'zho': 'Chinese (ä¸­æ–‡)',
-            'zh': 'Chinese (ä¸­æ–‡)',
-            'tam': 'Tamil (à®¤à®®à®¿à®´à¯)'
+            'chi': 'Chinese (中文)',
+            'zho': 'Chinese (中文)',
+            'zh': 'Chinese (中文)',
+            'tam': 'Tamil (தமிழ்)'
           };
           shakaTracks.forEach((t, idx) => {
             realStreamTracksFound++;

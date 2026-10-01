@@ -1,4 +1,4 @@
-﻿/**
+/**
  * MASTER APPLICATION CONTROLLER
  * Full 10-Foot TV Experience, Remote Control Key Navigation, VOD & Live Engine
  */
@@ -318,7 +318,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="vod-card-overlay">
           <div class="vod-card-title">${movie.title}</div>
           <div class="vod-card-meta">
-            <span>${movie.year} â€¢ ${movie.genre.split('/')[0]}</span>
+            <span>${movie.year} • ${movie.genre.split('/')[0]}</span>
             <span class="badge-res">${movie.quality}</span>
           </div>
         </div>
@@ -360,7 +360,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function openMovieDetail(movie) {
     if (!movieModal) return;
     document.getElementById("modal-movie-title").textContent = movie.title;
-    document.getElementById("modal-movie-meta").textContent = `${movie.year} â€¢ ${movie.duration} â€¢ ${movie.genre}`;
+    document.getElementById("modal-movie-meta").textContent = `${movie.year} • ${movie.duration} • ${movie.genre}`;
     document.getElementById("modal-movie-rating").innerHTML = `<i class="fa-solid fa-star"></i> ${movie.rating}/10`;
     document.getElementById("modal-movie-desc").textContent = movie.overview;
     document.getElementById("modal-movie-cast").textContent = `Cast: ${movie.cast} | Director: ${movie.director}`;
@@ -392,7 +392,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="vod-card-overlay">
           <div class="vod-card-title">${series.title}</div>
           <div class="vod-card-meta">
-            <span>${series.episodesCount} Episodes â€¢ ${series.genre.split('/')[0]}</span>
+            <span>${series.episodesCount} Episodes • ${series.genre.split('/')[0]}</span>
             <span class="badge-res">${series.quality}</span>
           </div>
         </div>
@@ -406,7 +406,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function openSeriesDetail(series) {
     if (!seriesModal) return;
     document.getElementById("modal-series-title").textContent = series.title;
-    document.getElementById("modal-series-meta").textContent = `${series.episodesCount} Episodes â€¢ ${series.genre}`;
+    document.getElementById("modal-series-meta").textContent = `${series.episodesCount} Episodes • ${series.genre}`;
     document.getElementById("modal-series-desc").textContent = series.overview;
     document.getElementById("modal-series-poster").src = series.poster;
 
@@ -425,7 +425,7 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
         <div style="flex: 1; min-width: 0;">
           <div style="font-weight: 700; color: #fff; font-size: 14px;">${ep.title}</div>
-          <div style="font-size: 12px; color: var(--text-muted);">${ep.duration} â€¢ ${ep.desc}</div>
+          <div style="font-size: 12px; color: var(--text-muted);">${ep.duration} • ${ep.desc}</div>
         </div>
         <button class="osd-btn" style="width: 38px; height: 38px; background: var(--accent-gradient);">
           <i class="fa-solid fa-play" style="font-size: 13px;"></i>
@@ -488,6 +488,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const found = channels.find(c => c.number === channelNumberBuffer);
         if (found) {
           selectChannel(found);
+          const card = document.querySelector(`.channel-item[data-channel-id="${found.id}"]`);
+          if (card) {
+            card.focus();
+            card.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
         }
         channelNumberBuffer = "";
       }, 1200);
@@ -512,6 +517,7 @@ document.addEventListener("DOMContentLoaded", () => {
         navigateFocus("right");
         break;
       case "Enter":
+      case "Select":
       case " ":
         if (document.activeElement && document.activeElement.classList.contains("focusable")) {
           document.activeElement.click();
@@ -521,28 +527,51 @@ document.addEventListener("DOMContentLoaded", () => {
         break;
       case "Escape":
       case "Backspace":
-        // Close modal if open
-        const openModal = document.querySelector(".modal-backdrop.active");
-        if (openModal) {
-          openModal.classList.remove("active");
-        } else {
-          switchView("live-tv");
-        }
+      case "GoBack":
+        e.preventDefault();
+        window.handleTvRemoteBack();
         break;
-      case "f":
-      case "F":
-        player.toggleFullscreen();
+      case "ChannelUp":
+      case "PageUp":
+        e.preventDefault();
+        window.handleTvChannelStep(-1);
         break;
-      case "m":
-      case "M":
-        player.video.muted = !player.video.muted;
-        player.updateVolumeIcon();
+      case "ChannelDown":
+      case "PageDown":
+        e.preventDefault();
+        window.handleTvChannelStep(1);
         break;
+      case "MediaPlayPause":
+        e.preventDefault();
+        player.togglePlay();
+        break;
+      case "MediaPlay":
+        e.preventDefault();
+        if (player.video) player.video.play();
+        break;
+      case "MediaPause":
+        e.preventDefault();
+        if (player.video) player.video.pause();
+        break;
+      case "Guide":
+      case "EPG":
       case "e":
       case "E":
       case "i":
       case "I":
-        switchView("epg-guide");
+        e.preventDefault();
+        window.handleTvToggleGuide();
+        break;
+      case "ContextMenu":
+      case "Menu":
+      case "m":
+      case "M":
+        e.preventDefault();
+        window.handleTvToggleMenu();
+        break;
+      case "f":
+      case "F":
+        player.toggleFullscreen();
         break;
       case "c":
       case "C":
@@ -553,28 +582,206 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Spatial Navigation Engine
+  // ── Global TV Remote Interface Exposed for Android Native Key Dispatcher ──
+  window.tvPlayer = player;
+
+  window.handleTvRemoteBack = function() {
+    // 1. Close open video details modal if present
+    const openModal = document.querySelector(".modal-backdrop.active");
+    if (openModal) {
+      openModal.classList.remove("active");
+      return true;
+    }
+
+    // 2. Close quick channels drawer if open
+    const quickDrawer = document.getElementById("player-quick-channels");
+    if (quickDrawer && quickDrawer.classList.contains("open")) {
+      quickDrawer.classList.remove("open");
+      return true;
+    }
+
+    // 3. Close subtitles menu if open
+    const subMenu = document.getElementById("osd-subtitles-menu");
+    if (subMenu && subMenu.classList.contains("active")) {
+      subMenu.classList.remove("active");
+      return true;
+    }
+
+    // 4. If in another view (EPG, Movies, Series, Settings), return to Live TV
+    const activeView = document.querySelector(".view-section.active");
+    if (activeView && activeView.id !== "view-live-tv") {
+      switchView("live-tv");
+      const activeCard = document.querySelector(".channel-item.active") || document.querySelector(".channel-item");
+      if (activeCard) activeCard.focus();
+      return true;
+    }
+
+    // 5. In Live TV: step back through UI zones (Player -> Channels -> Categories -> Sidebar)
+    const current = document.activeElement;
+    if (current) {
+      if (current.closest(".tv-player-stage")) {
+        const activeCard = document.querySelector(".channel-item.active") || document.querySelector(".channel-item");
+        if (activeCard) { activeCard.focus(); return true; }
+      } else if (current.closest(".tv-channels-pane")) {
+        const activeCat = document.querySelector(".category-pill.active") || document.querySelector(".category-pill");
+        if (activeCat) { activeCat.focus(); return true; }
+      } else if (current.closest(".tv-categories-pane")) {
+        const activeNav = document.querySelector(".nav-item.active") || document.querySelector(".nav-item");
+        if (activeNav) { activeNav.focus(); return true; }
+      }
+    }
+
+    // In sidebar: allow system to exit / minimize app
+    return false;
+  };
+
+  window.handleTvChannelStep = function(step) {
+    if (!channels || channels.length === 0) return;
+    let idx = 0;
+    if (activeChannel) {
+      const curIdx = channels.findIndex(c => c.id === activeChannel.id);
+      if (curIdx >= 0) idx = curIdx;
+    }
+    const nextIdx = (idx + step + channels.length) % channels.length;
+    selectChannel(channels[nextIdx]);
+
+    const card = document.querySelector(`.channel-item[data-channel-id="${channels[nextIdx].id}"]`);
+    if (card) {
+      card.focus();
+      card.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
+
+  window.handleTvToggleGuide = function() {
+    const isGuide = document.getElementById("view-epg-guide")?.classList.contains("active");
+    if (isGuide) {
+      switchView("live-tv");
+      const activeCard = document.querySelector(".channel-item.active") || document.querySelector(".channel-item");
+      if (activeCard) activeCard.focus();
+    } else {
+      switchView("epg-guide");
+    }
+  };
+
+  window.handleTvToggleMenu = function() {
+    const quickDrawer = document.getElementById("player-quick-channels");
+    if (quickDrawer) {
+      quickDrawer.classList.toggle("open");
+      if (quickDrawer.classList.contains("open")) {
+        const firstQuick = quickDrawer.querySelector(".focusable");
+        if (firstQuick) firstQuick.focus();
+      }
+    }
+  };
+
+  // ── True 2D Geometric Spatial Navigation Engine for Leanback Android TV ──
   function navigateFocus(direction) {
-    const focusables = Array.from(document.querySelectorAll(".focusable:not([style*='display: none'])"));
-    if (focusables.length === 0) return;
+    // Collect all currently visible, focusable elements
+    const allFocusables = Array.from(document.querySelectorAll(".focusable"))
+      .filter(el => {
+        if (!el || el.offsetParent === null) return false;
+        const style = window.getComputedStyle(el);
+        if (style.display === "none" || style.visibility === "hidden" || style.opacity === "0") return false;
+        // If modal open, restrict to modal elements
+        const openModal = document.querySelector(".modal-backdrop.active");
+        if (openModal) return openModal.contains(el);
+        return true;
+      });
+
+    if (allFocusables.length === 0) return;
 
     const current = document.activeElement;
-    const currentIndex = focusables.indexOf(current);
-
-    if (currentIndex === -1) {
-      focusables[0].focus();
+    if (!current || !allFocusables.includes(current)) {
+      // Recovery: focus active channel card or first element
+      const defaultEl = document.querySelector(".channel-item.active") || allFocusables[0];
+      if (defaultEl) {
+        defaultEl.focus();
+        defaultEl.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
       return;
     }
 
-    let nextIndex = currentIndex;
-    if (direction === "down" || direction === "right") {
-      nextIndex = (currentIndex + 1) % focusables.length;
-    } else if (direction === "up" || direction === "left") {
-      nextIndex = (currentIndex - 1 + focusables.length) % focusables.length;
+    const curRect = current.getBoundingClientRect();
+    const curCenter = {
+      x: curRect.left + curRect.width / 2,
+      y: curRect.top + curRect.height / 2
+    };
+
+    // 1. Logical Column/Zone Transitions for Live TV Split Layout
+    const isInSidebar = current.closest("#app-sidebar");
+    const isInCategories = current.closest(".tv-categories-pane");
+    const isInChannels = current.closest(".tv-channels-pane");
+    const isInStage = current.closest(".tv-player-stage");
+
+    if (isInSidebar && direction === "right") {
+      const cat = document.querySelector(".tv-categories-pane .category-pill.active") ||
+                  document.querySelector(".tv-categories-pane .category-pill");
+      if (cat) { cat.focus(); return; }
+    } else if (isInCategories && direction === "left") {
+      const nav = document.querySelector(".sidebar-menu .nav-item.active") ||
+                  document.querySelector(".sidebar-menu .nav-item");
+      if (nav) { nav.focus(); return; }
+    } else if (isInCategories && direction === "right") {
+      const chan = document.querySelector(".tv-channels-pane .channel-item.active") ||
+                   document.querySelector(".tv-channels-pane .channel-item");
+      if (chan) { chan.focus(); chan.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+    } else if (isInChannels && direction === "left") {
+      const cat = document.querySelector(".tv-categories-pane .category-pill.active") ||
+                  document.querySelector(".tv-categories-pane .category-pill");
+      if (cat) { cat.focus(); return; }
+    } else if (isInChannels && direction === "right") {
+      const stageBtn = document.getElementById("osd-play-pause") ||
+                       document.getElementById("osd-fullscreen-btn") ||
+                       document.querySelector(".tv-player-stage .focusable");
+      if (stageBtn) { stageBtn.focus(); player.showOsd(); return; }
+    } else if (isInStage && direction === "left") {
+      const chan = document.querySelector(".tv-channels-pane .channel-item.active") ||
+                   document.querySelector(".tv-channels-pane .channel-item");
+      if (chan) { chan.focus(); chan.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
     }
 
-    focusables[nextIndex].focus();
-    focusables[nextIndex].scrollIntoView({ behavior: "smooth", block: "nearest" });
+    // 2. Geometric 2D Euclidean Distance Matching
+    const isHorizontal = (direction === "left" || direction === "right");
+    let bestCandidate = null;
+    let minDistance = Infinity;
+
+    for (const cand of allFocusables) {
+      if (cand === current) continue;
+      const r = cand.getBoundingClientRect();
+      const c = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+
+      // Directional check
+      let isValidDir = false;
+      if (direction === "right" && c.x > curCenter.x + 8) isValidDir = true;
+      else if (direction === "left" && c.x < curCenter.x - 8) isValidDir = true;
+      else if (direction === "down" && c.y > curCenter.y + 8) isValidDir = true;
+      else if (direction === "up" && c.y < curCenter.y - 8) isValidDir = true;
+
+      if (!isValidDir) continue;
+
+      const dx = c.x - curCenter.x;
+      const dy = c.y - curCenter.y;
+
+      // Penalize orthogonal deviations heavily to maintain straight line movement
+      const dist = isHorizontal
+        ? (Math.abs(dx) + Math.abs(dy) * 3.5)
+        : (Math.abs(dy) + Math.abs(dx) * 3.5);
+
+      if (dist < minDistance) {
+        minDistance = dist;
+        bestCandidate = cand;
+      }
+    }
+
+    if (bestCandidate) {
+      bestCandidate.focus();
+      bestCandidate.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+      // If moving within categories on TV, auto-render corresponding channels
+      if (bestCandidate.classList.contains("category-pill")) {
+        bestCandidate.click();
+      }
+    }
   }
 
   // 12. Virtual Remote Control Toggle & Buttons
@@ -622,7 +829,7 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         const isRemote = url.startsWith("http://") || url.startsWith("https://");
         const fetchUrl = (isRemote && window.location.protocol.startsWith('http')) 
-          ? `/proxy?url=${encodeURIComponent(url)}` 
+          ? `proxy.php?url=${encodeURIComponent(url)}` 
           : url;
         const res = await fetch(fetchUrl);
         const text = await res.text();
@@ -685,7 +892,7 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         const isRemote = url.startsWith("http://") || url.startsWith("https://");
         const fetchUrl = (isRemote && window.location.protocol.startsWith('http')) 
-          ? `/proxy?url=${encodeURIComponent(url)}` 
+          ? `proxy.php?url=${encodeURIComponent(url)}` 
           : url;
         const res = await fetch(fetchUrl);
         const text = await res.text();
@@ -734,66 +941,159 @@ document.addEventListener("DOMContentLoaded", () => {
     sidebar.addEventListener("mouseleave", () => sidebar.classList.remove("expanded"));
   }
 
+  // Real-Time Dynamic EPG & Clock Sync Engine (Calculates what show is playing NOW)
+  function refreshDynamicEpg(reRenderAll = false) {
+    const nowSec = Math.floor(Date.now() / 1000);
+    const now = new Date();
+
+    channels.forEach(ch => {
+      // 1. If channel has schedule with timestamps, find exact show for current timestamp
+      if (ch.schedule && Array.isArray(ch.schedule) && ch.schedule.length > 0) {
+        let activeShow = ch.schedule.find(p => p.startTs && p.stopTs && nowSec >= p.startTs && nowSec < p.stopTs);
+        
+        // If between shows or current show just ended, check if any future show is coming up
+        if (!activeShow) {
+          activeShow = ch.schedule.find(p => p.startTs && p.stopTs && p.startTs <= nowSec && nowSec < p.stopTs + 300) ||
+                       ch.schedule.find(p => p.startTs && p.stopTs && p.startTs > nowSec);
+        }
+
+        if (activeShow) {
+          const showIdx = ch.schedule.indexOf(activeShow);
+          const nextShow = ch.schedule[showIdx + 1];
+
+          ch.currentProgram = activeShow.title;
+          ch.desc = activeShow.desc || ch.desc;
+          ch.programStart = activeShow.start || (activeShow.startTs ? new Date(activeShow.startTs * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ch.programStart);
+          ch.programEnd = activeShow.end || (activeShow.stopTs ? new Date(activeShow.stopTs * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ch.programEnd);
+
+          if (activeShow.startTs && activeShow.stopTs) {
+            const duration = Math.max(1, activeShow.stopTs - activeShow.startTs);
+            const elapsed = Math.max(0, nowSec - activeShow.startTs);
+            ch.progress = Math.min(100, Math.max(0, Math.round((elapsed / duration) * 100)));
+          }
+
+          if (nextShow) {
+            ch.nextProgram = nextShow.title;
+          }
+        }
+      } else {
+        // Fallback: Generate real-time 30-minute block for the channel
+        const currentMinutes = now.getMinutes();
+        const startMin = currentMinutes < 30 ? 0 : 30;
+        const startD = new Date(now);
+        startD.setMinutes(startMin, 0, 0);
+        const endD = new Date(startD.getTime() + 30 * 60 * 1000);
+
+        const formatT = (d) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        ch.programStart = formatT(startD);
+        ch.programEnd = formatT(endD);
+        const elapsedSec = (now.getTime() - startD.getTime()) / 1000;
+        ch.progress = Math.min(100, Math.max(0, Math.round((elapsedSec / 1800) * 100)));
+        if (!ch.currentProgram || ch.currentProgram === "Live TV") {
+          ch.currentProgram = ch.name.includes("News") ? "Buletin Terkini" : "Siaran Langsung HD";
+          ch.nextProgram = "Sorotan Khas";
+        }
+      }
+
+      // Update DOM card in channels list in-place (without losing focus or scroll position!)
+      const cardEl = document.querySelector(`.channel-item[data-channel-id="${ch.id}"]`);
+      if (cardEl) {
+        const titleEl = cardEl.querySelector(".show-title-text");
+        if (titleEl && titleEl.textContent !== (ch.currentProgram || "Live TV")) {
+          titleEl.textContent = ch.currentProgram || "Live TV";
+        }
+        const timeEl = cardEl.querySelector(".channel-prog-time");
+        if (timeEl && ch.programStart) {
+          timeEl.textContent = ch.programStart;
+        }
+        const barEl = cardEl.querySelector(".channel-progress-mini .bar");
+        if (barEl) {
+          barEl.style.width = `${ch.progress ?? 50}%`;
+        }
+        const nextEl = cardEl.querySelector(".channel-prog-next");
+        if (nextEl && ch.nextProgram) {
+          nextEl.innerHTML = `<span style="opacity:0.6;">Next:</span> ${ch.nextProgram}`;
+        }
+      }
+    });
+
+    // Update active channel OSD
+    if (activeChannel) {
+      const liveChan = channels.find(c => c.id === activeChannel.id);
+      if (liveChan) {
+        activeChannel = liveChan;
+        const osdProgram = document.getElementById("osd-channel-program");
+        if (osdProgram) {
+          const timeInfo = (activeChannel.programStart && activeChannel.programEnd) ? ` (${activeChannel.programStart} - ${activeChannel.programEnd})` : "";
+          osdProgram.textContent = (activeChannel.currentProgram || "Live Broadcast") + timeInfo;
+        }
+        const osdNext = document.getElementById("osd-channel-next");
+        if (osdNext) {
+          if (activeChannel.nextProgram) {
+            osdNext.textContent = `Next: ${activeChannel.nextProgram}`;
+            osdNext.style.display = "block";
+          } else {
+            osdNext.style.display = "none";
+          }
+        }
+        const osdProgBar = document.getElementById("osd-progress-fill");
+        if (osdProgBar && activeChannel.progress !== undefined) {
+          osdProgBar.style.width = `${activeChannel.progress}%`;
+        }
+      }
+    }
+
+    if (reRenderAll) {
+      renderChannels();
+    }
+  }
+
   // Live EPG Synchronization Engine
   function loadLiveEpg() {
-    fetch("/epg?v=" + Date.now())
+    fetch("epg.json?v=" + Date.now())
       .then(res => res.json())
       .then(data => {
         if (data && data.channels) {
           window.LIVE_EPG = data.channels;
-          let changed = false;
           channels.forEach(ch => {
             const epgItem = data.channels[ch.number];
-            if (epgItem && epgItem.current) {
-              ch.currentProgram = epgItem.current.title;
-              ch.desc = epgItem.current.desc || ch.desc;
-              ch.progress = epgItem.current.progress ?? 50;
-              ch.programStart = epgItem.current.start;
-              ch.programEnd = epgItem.current.end;
-              changed = true;
-            }
-            if (epgItem && epgItem.next) {
-              ch.nextProgram = epgItem.next.title;
-            }
-            if (epgItem && epgItem.schedule) {
-              ch.schedule = epgItem.schedule;
+            if (epgItem) {
+              if (epgItem.schedule && Array.isArray(epgItem.schedule) && epgItem.schedule.length > 0) {
+                ch.schedule = epgItem.schedule;
+              }
+              if (epgItem.desc) ch.desc = epgItem.desc;
             }
           });
-
-          if (changed) {
-            renderChannels();
-            if (activeChannel) {
-              const updated = channels.find(c => c.id === activeChannel.id);
-              if (updated) {
-                activeChannel = updated;
-                const progEl = document.getElementById("osd-channel-program");
-                if (progEl) {
-                  const timeInfo = (activeChannel.programStart && activeChannel.programEnd) ? ` (${activeChannel.programStart} - ${activeChannel.programEnd})` : "";
-                  progEl.textContent = (activeChannel.currentProgram || "Live TV") + timeInfo;
-                }
-                const nextEl = document.getElementById("osd-channel-next");
-                if (nextEl) {
-                  if (activeChannel.nextProgram) {
-                    nextEl.textContent = `Next: ${activeChannel.nextProgram}`;
-                    nextEl.style.display = "block";
-                  } else {
-                    nextEl.style.display = "none";
-                  }
-                }
-              }
-            }
-          }
+          refreshDynamicEpg(true);
         }
       })
-      .catch(e => console.warn("Live EPG synchronization notice:", e));
+      .catch(e => {
+        console.warn("Live EPG synchronization notice:", e);
+        refreshDynamicEpg(false);
+      });
   }
 
   // Initial Boot
+  refreshDynamicEpg(false);
   renderCategories();
   renderChannels();
   renderVodMovies();
   renderVodSeries();
   loadLiveEpg();
+
+  // Initial focus for Android TV Leanback Remote
+  setTimeout(() => {
+    const initialFocus = document.querySelector(".channel-item.active") || document.querySelector(".channel-item");
+    if (initialFocus) {
+      initialFocus.focus();
+      initialFocus.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, 400);
+
+  // Periodic real-time updates:
+  // 1. Every 5 seconds: refresh real-time current program titles & progress bar
+  setInterval(() => refreshDynamicEpg(false), 5000);
+  // 2. Every 60 seconds: sync fresh EPG schedule
   setInterval(loadLiveEpg, 60000);
 
   // Always load latest SQ2 Box playlist_tv2u.m3u to ensure all updated streams and DRM keys are active

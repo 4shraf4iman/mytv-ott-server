@@ -18,7 +18,7 @@ https://linearjitp-playback.astro.com.my/dash-wv/linear/711/default_ott.mpd
 #EXTVLCOPT:http-user-agent=Mozilla/5.0
 https://linearjitp-playback.astro.com.my/dash-wv/linear/5027/default_ott.mpd
 
-#EXTINF:-1 tvg-id="103" ch-number="103" tvg-name="103 TV3" tvg-logo="https://divign0fdw3sv.cloudfront.net/Images/ChannelLogo/contenthub/106_144.png" group-title="MALAY ENTERTAINMENT & GENERAL",103 TV3
+#EXTINF:-1 tvg-id="103" ch-number="103" tvg-name="103 TV3 HD" tvg-logo="https://divign0fdw3sv.cloudfront.net/Images/ChannelLogo/contenthub/106_144.png" group-title="MALAY ENTERTAINMENT & GENERAL",103 TV3 HD
 #KODIPROP:inputstream.adaptive.manifest_type=dash
 #KODIPROP:inputstream.adaptive.license_type=org.w3.clearkey
 #KODIPROP:inputstream.adaptive.license_key=3bc3f0e518aed92e80a98118e5bc2c10:5fce364fbc4499856597b19a96f44648
@@ -120,6 +120,11 @@ https://linearjitp-playback.astro.com.my/dash-wv/linear/2305/default_ott.mpd
 #KODIPROP:inputstream.adaptive.license_key=ea4d51ade01bbf3946e0de973051ba10:f3266bec607f25879f48640f30f1c888
 #EXTVLCOPT:http-user-agent=Mozilla/5.0
 https://linearjitp-playback.astro.com.my/dash-wv/linear/2407/default_primary.mpd
+
+#EXTINF:-1 tvg-id="410" ch-number="410" tvg-name="410 HBO HD" tvg-logo="https://raw.githubusercontent.com/PuteraPerlis74/MOVIES-LOGO/main/HBO%20HD.png" group-title="MOVIES & ENGLISH ENTERTAINMENT",410 HBO HD
+#KODIPROP:inputstream.adaptive.manifest_type=hls
+#EXTVLCOPT:http-user-agent=Mozilla/5.0
+https://load.ptv2026.com/rwt.m3u8?username=vip_3klp0es8&password=wg3piwEs&channel=hbo
 
 #EXTINF:-1 tvg-id="411" ch-number="411" tvg-name="411 Astro Showtime" tvg-logo="https://i.ibb.co/j9mLZCqL/1772801477017.png" group-title="MOVIES & ENGLISH ENTERTAINMENT",411 Astro Showtime
 #KODIPROP:inputstream.adaptive.manifest_type=dash
