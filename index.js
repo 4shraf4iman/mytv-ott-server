@@ -45,6 +45,34 @@ app.get('/status', (req, res) => {
   res.json({ status: 'ok', service: 'MY TV OTT Server', time: new Date().toISOString() });
 });
 
+// Diagnostic debug endpoint to test upstream fetching from Render
+app.get('/debug', async (req, res) => {
+  const url = req.query.url || 'https://linearjitp-playback.astro.com.my/dash-wv/linear/711/default_ott.mpd';
+  try {
+    const defaultUA = 'Mozilla/5.0 (Linux; Android 10; CPH1819 Build/QP1A.190711.020; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/135.0.7049.99 Mobile Safari/537.36';
+    const upstream = await fetch(url, {
+      headers: {
+        'User-Agent': defaultUA,
+        'Accept': '*/*'
+      },
+      redirect: 'follow',
+      signal: AbortSignal.timeout(15000)
+    });
+    const ipRes = await fetch('https://api.ipify.org?format=json').then(r => r.json()).catch(() => ({}));
+    const bodySnippet = (await upstream.text()).slice(0, 500);
+    res.json({
+      renderIp: ipRes.ip,
+      targetUrl: url,
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers: Object.fromEntries(upstream.headers.entries()),
+      body: bodySnippet
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message, stack: err.stack });
+  }
+});
+
 // ============================================================
 // PROXY ROUTE - equivalent of proxy.php
 // ============================================================
@@ -137,7 +165,11 @@ app.get('/proxy', async (req, res) => {
     if (ct) res.setHeader('Content-Type', ct);
     if (cl) res.setHeader('Content-Length', cl);
     if (cr) res.setHeader('Content-Range', cr);
-    Readable.fromWeb(upstream.body).pipe(res);
+    if (typeof upstream.body.pipe === 'function') {
+      upstream.body.pipe(res);
+    } else {
+      Readable.fromWeb(upstream.body).pipe(res);
+    }
 
   } catch (err) {
     console.error('Proxy error:', err.message);
