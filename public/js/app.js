@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const epgEngine = new EPGEngine(channels, (ch) => selectChannel(ch));
 
   let currentCategory = "All Channels";
-  let activeChannel = channels[0];
+  let activeChannel = channels.find(c => String(c.number) === "103" || (c.name && c.name.toLowerCase().includes("tv3"))) || channels[0];
   let channelNumberBuffer = "";
   let channelBufferTimeout = null;
 
@@ -935,11 +935,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Sidebar hover expansion
-  if (sidebar) {
-    sidebar.addEventListener("mouseenter", () => sidebar.classList.add("expanded"));
-    sidebar.addEventListener("mouseleave", () => sidebar.classList.remove("expanded"));
-  }
+  // Sidebar kept minimal and tidy (fixed 64px dock without disruptive hover expansion)
 
   // Real-Time Dynamic EPG & Clock Sync Engine (Calculates what show is playing NOW)
   function refreshDynamicEpg(reRenderAll = false) {
@@ -1081,9 +1077,17 @@ document.addEventListener("DOMContentLoaded", () => {
   renderVodSeries();
   loadLiveEpg();
 
-  // Initial focus for Android TV Leanback Remote
+  // Load & Play TV3 by default on app launch
+  const defaultTv3 = channels.find(c => String(c.number) === "103" || (c.name && c.name.toLowerCase().includes("tv3"))) || channels[0];
+  if (defaultTv3) {
+    selectChannel(defaultTv3);
+  }
+
+  // Initial focus on TV3 channel card for Android TV Leanback Remote
   setTimeout(() => {
-    const initialFocus = document.querySelector(".channel-item.active") || document.querySelector(".channel-item");
+    const initialFocus = document.querySelector('.channel-item[data-channel-id="ch-103"]') ||
+                         document.querySelector(".channel-item.active") ||
+                         document.querySelector(".channel-item");
     if (initialFocus) {
       initialFocus.focus();
       initialFocus.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -1107,16 +1111,21 @@ document.addEventListener("DOMContentLoaded", () => {
         loadLiveEpg();
         renderCategories();
         renderChannels();
+        const targetTv3 = channels.find(c => String(c.number) === "103" || (c.name && c.name.toLowerCase().includes("tv3"))) || channels[0];
         if (!activeChannel || !activeChannel.streamUrl) {
-          selectChannel(channels[0]);
+          selectChannel(targetTv3);
         }
         console.log(`Auto-loaded ${parsed.length} SQ2 Box channels with ClearKey DRM!`);
       } else if (channels.length > 0 && !activeChannel) {
-        selectChannel(channels[0]);
+        const targetTv3 = channels.find(c => String(c.number) === "103" || (c.name && c.name.toLowerCase().includes("tv3"))) || channels[0];
+        selectChannel(targetTv3);
       }
     })
     .catch(err => {
       console.warn("Could not auto-load playlist_tv2u.m3u:", err);
-      if (channels.length > 0 && !activeChannel) selectChannel(channels[0]);
+      if (channels.length > 0 && !activeChannel) {
+        const targetTv3 = channels.find(c => String(c.number) === "103" || (c.name && c.name.toLowerCase().includes("tv3"))) || channels[0];
+        selectChannel(targetTv3);
+      }
     });
 });

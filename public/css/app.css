@@ -93,69 +93,49 @@ html, body {
    SIDEBAR NAVIGATION
    ========================================================================== */
 #app-sidebar {
-  width: 90px;
+  width: 64px;
   height: 100%;
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 24px 0 16px 0;
+  padding: 16px 0 12px 0;
   z-index: 50;
-  transition: width var(--transition-smooth);
   backdrop-filter: blur(20px);
-}
-
-#app-sidebar.expanded {
-  width: 250px;
-  align-items: stretch;
-  padding-left: 16px;
-  padding-right: 16px;
+  flex-shrink: 0;
 }
 
 .sidebar-brand {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 0 12px 28px 12px;
+  justify-content: center;
+  padding: 0 0 20px 0;
   cursor: pointer;
 }
 
 .sidebar-brand-icon {
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 38px;
   background: var(--accent-gradient);
-  border-radius: var(--radius-md);
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-size: 22px;
+  font-size: 17px;
   box-shadow: var(--shadow-glow);
   flex-shrink: 0;
 }
 
 .sidebar-brand-text {
-  font-size: 19px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  background: linear-gradient(180deg, #ffffff 30%, #94a3b8 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  white-space: nowrap;
-  opacity: 0;
-  transition: opacity var(--transition-fast);
-  display: none;
-}
-
-#app-sidebar.expanded .sidebar-brand-text {
-  opacity: 1;
-  display: block;
+  display: none !important;
 }
 
 .sidebar-menu {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 10px;
   width: 100%;
   flex: 1;
@@ -164,51 +144,40 @@ html, body {
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 16px;
-  height: 52px;
-  border-radius: var(--radius-md);
-  padding: 0 16px;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  padding: 0;
   color: var(--text-secondary);
   background: transparent;
   border: 1px solid transparent;
   text-decoration: none;
-  font-weight: 500;
-  font-size: 15px;
   position: relative;
   transition: all var(--transition-fast);
-  width: 100%;
 }
 
 .nav-item i {
-  font-size: 20px;
-  min-width: 24px;
+  font-size: 18px;
+  min-width: auto;
   text-align: center;
   transition: color var(--transition-fast);
 }
 
 .nav-item span {
-  white-space: nowrap;
-  opacity: 0;
-  display: none;
-  transition: opacity var(--transition-fast);
-}
-
-#app-sidebar.expanded .nav-item span {
-  opacity: 1;
-  display: inline;
+  display: none !important;
 }
 
 .nav-item:hover,
 .nav-item:focus {
   color: #fff;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .nav-item.active {
   background: var(--accent-gradient);
   color: #ffffff;
   box-shadow: var(--shadow-glow);
-  font-weight: 600;
 }
 
 .nav-item.active i {
@@ -421,27 +390,28 @@ html, body {
 
 /* Categories Column */
 .tv-categories-pane {
-  width: 220px;
-  background: rgba(10, 14, 22, 0.85);
+  width: 180px;
+  background: rgba(10, 14, 22, 0.88);
   border-right: 1px solid var(--border-subtle);
-  padding: 16px 12px;
+  padding: 14px 8px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   overflow-y: auto;
   backdrop-filter: blur(12px);
   z-index: 10;
+  flex-shrink: 0;
 }
 
 .category-pill {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px;
-  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
   color: var(--text-secondary);
   border: 1px solid transparent;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   background: transparent;
   transition: all var(--transition-fast);
@@ -450,19 +420,19 @@ html, body {
 .category-pill .cat-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .category-pill .cat-left i {
-  font-size: 16px;
-  width: 18px;
+  font-size: 14px;
+  width: 16px;
   text-align: center;
 }
 
 .category-pill .cat-count {
-  font-size: 11px;
+  font-size: 10px;
   background: rgba(255, 255, 255, 0.08);
-  padding: 2px 7px;
+  padding: 2px 6px;
   border-radius: var(--radius-full);
   color: var(--text-muted);
 }
@@ -486,20 +456,21 @@ html, body {
   font-weight: 700;
 }
 
-/* Channels Column */
+/* Channels Column - Focused & Expanded for Screen */
 .tv-channels-pane {
-  width: 360px;
-  background: rgba(13, 17, 26, 0.9);
+  width: 380px;
+  background: rgba(12, 16, 25, 0.94);
   border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   backdrop-filter: blur(16px);
   z-index: 9;
+  flex-shrink: 0;
 }
 
 .channels-pane-header {
-  padding: 16px;
+  padding: 14px 16px;
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   justify-content: space-between;
@@ -507,7 +478,7 @@ html, body {
 }
 
 .channels-pane-header h2 {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
@@ -517,21 +488,23 @@ html, body {
 .channels-list {
   flex: 1;
   overflow-y: auto;
-  padding: 10px;
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  scroll-behavior: smooth;
 }
 
-/* Individual Channel Card */
+/* Individual Channel Card - Crisp, Focused & Modern */
 .channel-item {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 12px 14px;
-  border-radius: var(--radius-md);
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
   background: var(--bg-glass-card);
   border: 1px solid var(--border-subtle);
+  border-left: 3px solid transparent;
   position: relative;
   transition: all var(--transition-fast);
 }
@@ -540,12 +513,15 @@ html, body {
 .channel-item:focus {
   background: var(--bg-card-hover);
   border-color: var(--primary);
+  border-left-color: var(--primary);
+  transform: translateX(3px);
 }
 
 .channel-item.active {
-  background: linear-gradient(90deg, rgba(0, 210, 255, 0.15) 0%, rgba(58, 123, 213, 0.1) 100%);
-  border-color: var(--primary);
-  box-shadow: 0 0 20px rgba(0, 210, 255, 0.2);
+  background: linear-gradient(90deg, rgba(0, 210, 255, 0.18) 0%, rgba(58, 123, 213, 0.08) 100%);
+  border-color: rgba(0, 210, 255, 0.4);
+  border-left: 4px solid var(--primary);
+  box-shadow: 0 4px 20px rgba(0, 210, 255, 0.18);
 }
 
 .channel-num {
