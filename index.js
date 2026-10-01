@@ -15,10 +15,14 @@ import { parseStringPromise } from 'xml2js';
 import { createRequire } from 'module';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import { Readable } from 'stream';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Trust Render/Railway reverse proxy so req.protocol = 'https'
+app.set('trust proxy', 1);
 
 // Serve frontend static files
 app.use(express.static(join(__dirname, 'public')));
@@ -124,7 +128,8 @@ app.get('/proxy', async (req, res) => {
       return res.send(rewriteM3u8(text, effectiveUrlFinal, customReferer, req));
     }
 
-    // Binary segment passthrough
+    // Binary segment passthrough — node-fetch v3 body is a Web Streams ReadableStream,
+    // must convert to Node.js Readable before piping to Express response
     res.status(upstream.status);
     const ct = upstream.headers.get('content-type');
     const cl = upstream.headers.get('content-length');
@@ -132,7 +137,7 @@ app.get('/proxy', async (req, res) => {
     if (ct) res.setHeader('Content-Type', ct);
     if (cl) res.setHeader('Content-Length', cl);
     if (cr) res.setHeader('Content-Range', cr);
-    upstream.body.pipe(res);
+    Readable.fromWeb(upstream.body).pipe(res);
 
   } catch (err) {
     console.error('Proxy error:', err.message);
